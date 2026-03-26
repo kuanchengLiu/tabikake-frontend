@@ -52,15 +52,16 @@ export const recordsApi = {
       headers: { "Content-Type": "multipart/form-data" },
     }),
   create: (data: {
-    store_name_zh: string;
+    store: string;
     amount_jpy: number;
     tax_jpy: number;
-    payment_method: string;
+    payment: string;
     category: string;
     items: { name_jp: string; name_zh: string; price: number }[];
     date: string;
     trip_id: string;
     paid_by: string;
+    paid_by_name: string;
     split_with: string[];
   }) => api.post<import("./types").Record>("/records", data),
   list: (tripId: string) =>

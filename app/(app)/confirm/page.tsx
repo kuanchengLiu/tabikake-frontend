@@ -61,15 +61,16 @@ export default function ConfirmPage() {
     setError(null);
     try {
       await recordsApi.create({
-        store_name_zh: data.store_name_zh,
+        store: data.store_name_zh || data.store_name_jp,
         amount_jpy: data.amount_jpy,
         tax_jpy: data.tax_jpy,
-        payment_method: data.payment_method,
+        payment: data.payment_method,
         category: data.category,
         items: data.items,
         date: data.date,
         trip_id: tripId,
         paid_by: user?.id ?? "",
+        paid_by_name: user?.name ?? "",
         split_with: [],
       });
       sessionStorage.removeItem("parsed_receipt");
