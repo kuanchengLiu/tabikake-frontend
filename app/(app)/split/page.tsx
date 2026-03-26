@@ -40,7 +40,7 @@ export default function SplitPage() {
     );
   }
 
-  const maxPersonAmount = Math.max(...(data?.by_person.map((p) => p.amount) ?? [0]), 0);
+  const maxPersonAmount = Math.max(...(data?.by_person?.map((p) => p.amount) ?? [0]), 0);
 
   return (
     <div className="flex flex-col px-5 pt-safe pb-6 gap-5">
@@ -53,18 +53,18 @@ export default function SplitPage() {
 
       {mode === "equal" ? (
         <>
-          {data && data.by_person.length > 0 && (
+          {data && (data.by_person?.length ?? 0) > 0 && (
             <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-[#2e2e2e] flex flex-col gap-4">
               <h2 className="text-sm font-semibold text-[#f0f0f0]">各自の支払い</h2>
-              {data.by_person.map((p) => (
+              {data.by_person?.map((p) => (
                 <PersonBar key={p.user_id} name={p.name} amount={p.amount} max={maxPersonAmount} />
               ))}
             </div>
           )}
-          {data && data.settlements.length > 0 && (
+          {data && (data.settlements?.length ?? 0) > 0 && (
             <div className="flex flex-col gap-3">
               <h2 className="text-sm font-semibold text-[#f0f0f0]">精算内容</h2>
-              {data.settlements.map((s, i) => (
+              {data.settlements?.map((s, i) => (
                 <SettlementCard key={i} fromName={s.from_name} toName={s.to_name} amount={s.amount} />
               ))}
             </div>

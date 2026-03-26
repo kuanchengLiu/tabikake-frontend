@@ -25,9 +25,10 @@ interface ParseResultProps {
   data: ParsedReceipt;
   onConfirm: (data: ParsedReceipt) => void;
   loading?: boolean;
+  showRescan?: boolean;
 }
 
-export function ParseResult({ data, onConfirm, loading = false }: ParseResultProps) {
+export function ParseResult({ data, onConfirm, loading = false, showRescan = true }: ParseResultProps) {
   const [form, setForm] = useState<ParsedReceipt>(data);
 
   const updateField = <K extends keyof ParsedReceipt>(

@@ -42,9 +42,14 @@ export default function DashboardPage() {
     return <div className="flex items-center justify-center h-full text-[#888888] text-sm">読み込み失敗</div>;
   }
 
-  const maxPersonAmount = Math.max(...data.by_person.map((p) => p.amount), 0);
+  const totalJpy = data.total_jpy ?? 0;
+  const totalTwd = data.total_twd ?? 0;
+  const byPerson = data.by_person ?? [];
+  const byCategory = data.by_category ?? [];
+  const records = data.records ?? [];
+  const maxPersonAmount = Math.max(...byPerson.map((p) => p.amount), 0);
   const today = new Date().toISOString().slice(0, 10);
-  const todayRecords = data.records.filter((r) => r.date.startsWith(today));
+  const todayRecords = records.filter((r) => r.date.startsWith(today));
 
   return (
     <div className="flex flex-col px-5 pt-safe pb-6 gap-6">
@@ -61,25 +66,25 @@ export default function DashboardPage() {
 
       {/* Totals */}
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="合計 (JPY)" value={`¥${data.total_jpy.toLocaleString()}`} />
-        <StatCard label="合計 (TWD)" value={`NT$${data.total_twd.toLocaleString()}`} />
+        <StatCard label="合計 (JPY)" value={`¥${totalJpy.toLocaleString()}`} />
+        <StatCard label="合計 (TWD)" value={`NT$${totalTwd.toLocaleString()}`} />
       </div>
 
       {/* Per person */}
-      {data.by_person.length > 0 && (
+      {byPerson.length > 0 && (
         <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-[#2e2e2e] flex flex-col gap-4">
           <h2 className="text-sm font-semibold text-[#f0f0f0]">メンバー別</h2>
-          {data.by_person.map((p) => (
+          {byPerson.map((p) => (
             <PersonBar key={p.user_id} name={p.name} amount={p.amount} max={maxPersonAmount} />
           ))}
         </div>
       )}
 
       {/* Category chart */}
-      {data.by_category.length > 0 && (
+      {byCategory.length > 0 && (
         <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-[#2e2e2e]">
           <h2 className="text-sm font-semibold text-[#f0f0f0] mb-4">カテゴリ別</h2>
-          <CategoryChart data={data.by_category} />
+          <CategoryChart data={byCategory} />
         </div>
       )}
 
@@ -88,6 +93,7 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold text-[#f0f0f0]">今日の支出</h2>
           {todayRecords.map((r) => <RecordCard key={r.id} record={r} />)}
+
         </div>
       )}
     </div>

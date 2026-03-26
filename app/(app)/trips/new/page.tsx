@@ -12,10 +12,9 @@ export default function NewTripPage() {
   const router = useRouter();
   const { mutateAsync: createTrip, isPending } = useCreateTrip();
   const setCurrentTripId = useTripStore((s) => s.setCurrentTripId);
-  const [form, setForm] = useState({ name: "", start_date: "", end_date: "" });
-  const [error, setError] = useState<string | null>(null);
-
   const today = new Date().toISOString().slice(0, 10);
+  const [form, setForm] = useState({ name: "", start_date: today, end_date: "" });
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +62,6 @@ export default function NewTripPage() {
             label="開始日"
             type="date"
             value={form.start_date}
-            defaultValue={today}
             onChange={(e) => setForm((p) => ({ ...p, start_date: e.target.value }))}
             disabled={isPending}
           />

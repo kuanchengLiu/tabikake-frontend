@@ -8,29 +8,53 @@ import type { ParsedReceipt } from "@/lib/types";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useTripStore } from "@/store/trip-store";
 
+const EMPTY_RECEIPT: ParsedReceipt = {
+  store_name_jp: "",
+  store_name_zh: "",
+  amount_jpy: 0,
+  tax_jpy: 0,
+  payment_method: "現金",
+  category: "其他",
+  items: [],
+  date: new Date().toISOString().slice(0, 10),
+};
+
 export default function ConfirmPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: user } = useAuth();
   const storeTripId = useTripStore((s) => s.currentTripId);
-  const tripId = searchParams.get("trip_id") ?? sessionStorage.getItem("current_trip_id") ?? storeTripId ?? "";
+
+  const mode = searchParams.get("mode") ?? "ocr";
+  const isManual = mode === "manual";
+  const tripId =
+    searchParams.get("trip_id") ??
+    sessionStorage.getItem("current_trip_id") ??
+    storeTripId ??
+    "";
 
   const [parsed, setParsed] = useState<ParsedReceipt | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isManual) {
+      // Manual mode: start with all-empty fields
+      setParsed(EMPTY_RECEIPT);
+      return;
+    }
+    // OCR mode: read from sessionStorage
     const stored = sessionStorage.getItem("parsed_receipt");
     if (!stored) {
-      router.replace("/upload");
+      router.replace(`/upload${tripId ? `?trip_id=${tripId}` : ""}`);
       return;
     }
     try {
       setParsed(JSON.parse(stored) as ParsedReceipt);
     } catch {
-      router.replace("/upload");
+      router.replace(`/upload${tripId ? `?trip_id=${tripId}` : ""}`);
     }
-  }, [router]);
+  }, [isManual, router, tripId]);
 
   const handleConfirm = async (data: ParsedReceipt) => {
     setLoading(true);
@@ -77,12 +101,26 @@ export default function ConfirmPage() {
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
         </button>
-        <div>
-          <h1 className="text-xl font-bold text-[#f0f0f0]">内容を確認</h1>
-          <p className="text-sm text-[#888888]">必要に応じて修正してください</p>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl font-bold text-[#f0f0f0]">
+            {isManual ? "手動入力" : "内容を確認"}
+          </h1>
+          <p className="text-sm text-[#888888]">
+            {isManual ? "支出の内容を入力してください" : "必要に応じて修正してください"}
+          </p>
         </div>
+        {!isManual && (
+          <button
+            onClick={() => router.back()}
+            className="text-xs text-amber-500 font-medium active:opacity-70 flex-shrink-0"
+          >
+            再スキャン
+          </button>
+        )}
       </div>
-      <ParseResult data={parsed} onConfirm={handleConfirm} loading={loading} />
+
+      <ParseResult data={parsed} onConfirm={handleConfirm} loading={loading} showRescan={!isManual} />
+
       {error && (
         <div className="mt-4 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-2xl">
           <p className="text-sm text-red-400">{error}</p>
