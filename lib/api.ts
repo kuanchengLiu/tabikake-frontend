@@ -84,6 +84,28 @@ export const tripsApi = {
     api.post<import("./types").Trip>("/trips", data),
 };
 
+// Members endpoints
+export const membersApi = {
+  list: (tripId: string) =>
+    api.get<import("./types").Member[]>(`/trips/${tripId}/members`),
+  create: (tripId: string, data: { name: string; avatar_color: string }) =>
+    api.post<import("./types").Member>(`/trips/${tripId}/members`, data),
+};
+
+// Settlement endpoint
+export const settlementApi = {
+  get: (tripId: string) =>
+    api.get<import("./types").SettlementResult>(`/trips/${tripId}/settlement`),
+};
+
+// Join trip endpoints
+export const joinApi = {
+  info: (code: string) =>
+    api.get<{ trip_name: string; invite_code: string }>(`/trips/join-info?code=${code}`),
+  join: (data: { code: string; name: string; avatar_color: string }) =>
+    api.post<{ trip: import("./types").Trip; member: import("./types").Member }>(`/trips/join`, data),
+};
+
 // Split export endpoint
 export const splitApi = {
   export: (tripId: string) =>

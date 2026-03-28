@@ -26,9 +26,10 @@ interface ParseResultProps {
   onConfirm: (data: ParsedReceipt) => void;
   loading?: boolean;
   showRescan?: boolean;
+  children?: React.ReactNode;
 }
 
-export function ParseResult({ data, onConfirm, loading = false, showRescan = true }: ParseResultProps) {
+export function ParseResult({ data, onConfirm, loading = false, children }: ParseResultProps) {
   const [form, setForm] = useState<ParsedReceipt>(data);
 
   const updateField = <K extends keyof ParsedReceipt>(
@@ -198,6 +199,8 @@ export function ParseResult({ data, onConfirm, loading = false, showRescan = tru
           </div>
         )}
       </div>
+
+      {children}
 
       {/* Confirm button */}
       <Button

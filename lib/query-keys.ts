@@ -12,4 +12,10 @@ export const QUERY_KEYS = {
   dashboard: {
     data: (tripId: string) => ["dashboard", tripId] as const,
   },
+  members: {
+    list: (tripId: string) => ["members", tripId] as const,
+  },
+  settlement: {
+    data: (tripId: string) => ["settlement", tripId] as const,
+  },
 } as const;

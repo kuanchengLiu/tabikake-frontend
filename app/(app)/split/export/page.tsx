@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useDashboard } from "@/lib/hooks/use-dashboard";
+import { useSettlement } from "@/lib/hooks/use-settlement";
 import { useTripStore } from "@/store/trip-store";
-import { SettlementCard } from "@/components/split/settlement-card";
+import { MemberAvatar } from "@/components/member/member-avatar";
 import { Button } from "@/components/ui/button";
 import { splitApi, getErrorMessage } from "@/lib/api";
 
@@ -14,11 +14,13 @@ export default function SplitExportPage() {
   const storeTripId = useTripStore((s) => s.currentTripId);
   const tripId = searchParams.get("trip_id") ?? storeTripId ?? "";
 
-  const { data } = useDashboard(tripId);
+  const { data } = useSettlement(tripId || null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [notionUrl, setNotionUrl] = useState<string | null>(null);
+
+  const settlements = data?.settlements ?? [];
 
   const handleExport = async () => {
     setLoading(true);
@@ -26,7 +28,6 @@ export default function SplitExportPage() {
     try {
       const res = await splitApi.export(tripId);
       setStatus("success");
-      // If the backend returns a Notion URL
       const url = (res.data as { url?: string })?.url;
       if (url) setNotionUrl(url);
     } catch (err) {
@@ -55,11 +56,31 @@ export default function SplitExportPage() {
         </div>
       </div>
 
-      {data && data.settlements.length > 0 && (
+      {/* Settlement preview */}
+      {settlements.length > 0 && (
         <div className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold text-[#f0f0f0]">精算内容</h2>
-          {data.settlements.map((s, i) => (
-            <SettlementCard key={i} fromName={s.from_name} toName={s.to_name} amount={s.amount} />
+          {settlements.map((s, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 bg-[#1a1a1a] border border-[#2e2e2e] rounded-2xl px-4 py-3"
+            >
+              <MemberAvatar member={s.from} size="md" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888888" strokeWidth="2" strokeLinecap="round" className="flex-shrink-0">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+              <MemberAvatar member={s.to} size="md" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-[#f0f0f0]">
+                  <span className="font-semibold">{s.from.name}</span>
+                  <span className="text-[#888888]"> → </span>
+                  <span className="font-semibold">{s.to.name}</span>
+                </p>
+              </div>
+              <span className="text-base font-bold text-amber-500 flex-shrink-0">
+                ¥{s.amount_jpy.toLocaleString()}
+              </span>
+            </div>
           ))}
         </div>
       )}

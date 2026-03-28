@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useTripStore } from "@/store/trip-store";
 
 const NAV_ITEMS = [
@@ -74,7 +75,19 @@ const TRIP_AWARE_HREFS = new Set(["/records", "/dashboard", "/split", "/upload"]
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const currentTripId = useTripStore((s) => s.currentTripId);
+  const prevTripId = useRef(currentTripId);
+
+  // When trip switches, update URL so trip-aware pages refetch immediately
+  useEffect(() => {
+    if (!currentTripId || currentTripId === prevTripId.current) return;
+    prevTripId.current = currentTripId;
+    const base = pathname.split("?")[0];
+    if (TRIP_AWARE_HREFS.has(base)) {
+      router.replace(`${base}?trip_id=${currentTripId}`);
+    }
+  }, [currentTripId, pathname, router]);
 
   // Build nav href: trip-aware pages get ?trip_id= appended
   const navHref = (href: string) => {

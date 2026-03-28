@@ -51,7 +51,32 @@ export interface Trip {
   end_date: string;
   notion_page_id: string;
   notion_db_id: string;
+  invite_code: string;
   created_at: string;
+}
+
+export interface Member {
+  id: string;
+  trip_id: string;
+  name: string;
+  avatar_color: string;
+  is_owner: boolean;
+  created_at: string;
+}
+
+export interface SettlementResult {
+  total_jpy: number;
+  by_member: {
+    member: Member;
+    paid_jpy: number;
+    owe_jpy: number;
+    diff_jpy: number;
+  }[];
+  settlements: {
+    from: Member;
+    to: Member;
+    amount_jpy: number;
+  }[];
 }
 
 export interface ApiError {
