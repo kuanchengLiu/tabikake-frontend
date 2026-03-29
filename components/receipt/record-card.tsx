@@ -24,10 +24,12 @@ interface RecordCardProps {
 export function RecordCard({ record, onEdit, onDelete }: RecordCardProps) {
   const [offset, setOffset] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const startXRef = useRef<number | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     startXRef.current = e.touches[0].clientX;
+    setDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -51,6 +53,7 @@ export function RecordCard({ record, onEdit, onDelete }: RecordCardProps) {
       setOffset(revealed ? -REVEAL_WIDTH : 0);
     }
     startXRef.current = null;
+    setDragging(false);
   };
 
   const close = () => { setRevealed(false); setOffset(0); };
@@ -93,7 +96,7 @@ export function RecordCard({ record, onEdit, onDelete }: RecordCardProps) {
         className="flex items-center gap-3 py-3 px-4 bg-[#1a1a1a] border border-[#2e2e2e] rounded-2xl relative"
         style={{
           transform: `translateX(${offset}px)`,
-          transition: startXRef.current !== null ? "none" : "transform 0.2s ease",
+          transition: dragging ? "none" : "transform 0.2s ease",
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}

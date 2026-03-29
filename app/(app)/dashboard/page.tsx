@@ -92,7 +92,9 @@ export default function DashboardPage() {
       {todayRecords.length > 0 && (
         <div className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold text-[#f0f0f0]">今日の支出</h2>
-          {todayRecords.map((r) => <RecordCard key={r.id} record={r} />)}
+          {todayRecords.map((r) => (
+            <RecordCard key={r.id} record={r} onEdit={() => {}} onDelete={() => {}} />
+          ))}
 
         </div>
       )}
