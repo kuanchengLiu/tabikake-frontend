@@ -27,8 +27,13 @@ export function useTrip(id: string | null) {
 export function useCreateTrip() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { name: string; start_date: string; end_date: string }) =>
-      tripsApi.create(data).then((r) => r.data),
+    mutationFn: (data: {
+      name: string;
+      start_date: string;
+      end_date: string;
+      owner_name: string;
+      owner_avatar_color: string;
+    }) => tripsApi.create(data).then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trips.all });
     },

@@ -26,7 +26,14 @@ function TripCard({ trip, onSelect }: { trip: Trip; onSelect: (id: string) => vo
           onClick={() => onSelect(trip.id)}
           className="flex-1 text-left min-w-0"
         >
-          <h2 className="text-base font-semibold text-[#f0f0f0] truncate">{trip.name}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-semibold text-[#f0f0f0] truncate">{trip.name}</h2>
+            {!trip.is_owner && (
+              <span className="flex-shrink-0 text-[10px] font-semibold text-blue-400 border border-blue-400/40 bg-blue-400/10 rounded-full px-1.5 py-0.5">
+                参加中
+              </span>
+            )}
+          </div>
           <p className="text-sm text-[#888888] mt-0.5">
             {formatDateRange(trip.start_date, trip.end_date)}
           </p>

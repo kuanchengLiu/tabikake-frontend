@@ -1,4 +1,5 @@
 import axios, { AxiosError } from "axios";
+import { useTripStore } from "@/store/trip-store";
 
 // All requests go through the Next.js proxy so the server can attach
 // the httpOnly auth_token cookie as an Authorization header.
@@ -9,6 +10,15 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+});
+
+// Request interceptor: attach X-Member-ID from Zustand store
+api.interceptors.request.use((config) => {
+  const memberId = useTripStore.getState().currentMemberID;
+  if (memberId) {
+    config.headers["X-Member-ID"] = memberId;
+  }
+  return config;
 });
 
 // Response interceptor: on 401 redirect to login
@@ -48,22 +58,37 @@ export const authApi = {
 // Records endpoints
 export const recordsApi = {
   parse: (formData: FormData) =>
-    api.post<import("./types").ParsedReceipt>("/records/parse", formData, {
+    api.post<import("./types").ParsedReceipt>("/parse", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
   create: (data: {
     store: string;
     amount_jpy: number;
+    amount_twd?: number;
     tax_jpy: number;
     payment: string;
     category: string;
     items: { name_jp: string; name_zh: string; price: number }[];
     date: string;
     trip_id: string;
-    paid_by: string;
-    paid_by_name: string;
+    paid_by_member_id: string;
     split_with: string[];
   }) => api.post<import("./types").Record>("/records", data),
+  update: (
+    id: string,
+    data: Partial<{
+      store: string;
+      amount_jpy: number;
+      tax_jpy: number;
+      payment: string;
+      category: string;
+      items: { name_jp: string; name_zh: string; price: number }[];
+      date: string;
+      paid_by_member_id: string;
+      split_with: string[];
+    }>
+  ) => api.patch<import("./types").Record>(`/records/${id}`, data),
+  delete: (id: string) => api.delete(`/records/${id}`),
   list: (tripId: string) =>
     api.get<import("./types").Record[]>("/records", {
       params: { trip_id: tripId },
@@ -80,8 +105,17 @@ export const dashboardApi = {
 export const tripsApi = {
   list: () => api.get<import("./types").Trip[]>("/trips"),
   get: (id: string) => api.get<import("./types").Trip>(`/trips/${id}`),
-  create: (data: { name: string; start_date: string; end_date: string }) =>
-    api.post<import("./types").Trip>("/trips", data),
+  create: (data: {
+    name: string;
+    start_date: string;
+    end_date: string;
+    owner_name: string;
+    owner_avatar_color: string;
+  }) =>
+    api.post<{ trip: import("./types").Trip; owner: import("./types").Member }>(
+      "/trips",
+      data
+    ),
 };
 
 // Members endpoints
@@ -90,6 +124,8 @@ export const membersApi = {
     api.get<import("./types").Member[]>(`/trips/${tripId}/members`),
   create: (tripId: string, data: { name: string; avatar_color: string }) =>
     api.post<import("./types").Member>(`/trips/${tripId}/members`, data),
+  delete: (tripId: string, memberId: string) =>
+    api.delete(`/trips/${tripId}/members/${memberId}`),
 };
 
 // Settlement endpoint
@@ -101,13 +137,15 @@ export const settlementApi = {
 // Join trip endpoints
 export const joinApi = {
   info: (code: string) =>
-    api.get<{ trip_name: string; invite_code: string }>(`/trips/join-info?code=${code}`),
-  join: (data: { code: string; name: string; avatar_color: string }) =>
-    api.post<{ trip: import("./types").Trip; member: import("./types").Member }>(`/trips/join`, data),
+    api.get<import("./types").JoinInfo>(`/trips/join-info?code=${code}`),
+  join: (data: { invite_code: string; name: string; avatar_color: string }) =>
+    api.post<{ trip: import("./types").Trip; member: import("./types").Member }>(
+      "/trips/join",
+      data
+    ),
 };
 
 // Split export endpoint
 export const splitApi = {
-  export: (tripId: string) =>
-    api.post(`/split/export/${tripId}`),
+  export: (tripId: string) => api.post(`/split/export/${tripId}`),
 };

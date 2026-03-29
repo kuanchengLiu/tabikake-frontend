@@ -8,15 +8,19 @@ import { ColorPicker, DEFAULT_COLOR } from "@/components/member/color-picker";
 import { MemberAvatar } from "@/components/member/member-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { Member } from "@/lib/types";
+import type { JoinInfo, Member } from "@/lib/types";
+
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" });
+}
 
 export default function JoinPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const code = searchParams.get("code") ?? "";
-  const setCurrentTripId = useTripStore((s) => s.setCurrentTripId);
+  const { setCurrentTripId, setCurrentMemberID } = useTripStore();
 
-  const [tripName, setTripName] = useState<string | null>(null);
+  const [info, setInfo] = useState<JoinInfo | null>(null);
   const [infoLoading, setInfoLoading] = useState(true);
   const [infoError, setInfoError] = useState<string | null>(null);
 
@@ -37,8 +41,8 @@ export default function JoinPage() {
       return;
     }
     joinApi.info(code)
-      .then(({ data }) => { setTripName(data.trip_name); })
-      .catch((err) => { setInfoError(getErrorMessage(err)); })
+      .then(({ data }) => setInfo(data))
+      .catch((err) => setInfoError(getErrorMessage(err)))
       .finally(() => setInfoLoading(false));
   }, [code]);
 
@@ -47,9 +51,10 @@ export default function JoinPage() {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await joinApi.join({ code, name: name.trim(), avatar_color: color });
+      const { data } = await joinApi.join({ invite_code: code, name: name.trim(), avatar_color: color });
       setCurrentTripId(data.trip.id);
-      router.replace("/trips");
+      setCurrentMemberID(data.member.id);
+      router.replace(`/records?trip_id=${data.trip.id}`);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -82,15 +87,30 @@ export default function JoinPage() {
 
   return (
     <div className="flex flex-col min-h-dvh bg-[#0f0f0f] px-6 pt-safe pb-8">
-      <div className="flex flex-col items-center gap-2 py-10">
+      <div className="flex flex-col items-center gap-2 py-8">
         <div className="w-16 h-16 rounded-2xl bg-amber-500 flex items-center justify-center text-3xl">
           ✈️
         </div>
         <h1 className="text-xl font-bold text-[#f0f0f0] mt-2">旅行に参加する</h1>
-        <p className="text-sm text-[#888888] text-center">
-          <span className="text-amber-500 font-semibold">{tripName}</span> に招待されました
-        </p>
       </div>
+
+      {/* Trip info card */}
+      {info && (
+        <div className="bg-[#1a1a1a] border border-[#2e2e2e] rounded-2xl p-4 flex flex-col gap-2 mb-6">
+          <h2 className="text-base font-bold text-amber-500">{info.trip_name}</h2>
+          <div className="flex flex-col gap-1">
+            <p className="text-xs text-[#888888]">
+              建立者：<span className="text-[#f0f0f0]">{info.owner_name}</span>
+            </p>
+            <p className="text-xs text-[#888888]">
+              目前メンバー：<span className="text-[#f0f0f0]">{info.member_count} 人</span>
+            </p>
+            <p className="text-xs text-[#888888]">
+              旅行日：<span className="text-[#f0f0f0]">{formatDate(info.start_date)} – {formatDate(info.end_date)}</span>
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-5">
         <Input
@@ -114,13 +134,7 @@ export default function JoinPage() {
           </div>
         )}
 
-        <Button
-          variant="primary"
-          size="lg"
-          loading={loading}
-          disabled={!name.trim()}
-          onClick={handleJoin}
-        >
+        <Button variant="primary" size="lg" loading={loading} disabled={!name.trim()} onClick={handleJoin}>
           旅行に参加する
         </Button>
       </div>

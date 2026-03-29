@@ -21,12 +21,21 @@ export interface Record {
   date: string;
   amount_jpy: number;
   amount_twd: number;
+  tax_jpy: number;
   category: string;
   payment: string;
-  paid_by: string;
-  paid_by_name: string;
+  paid_by_member_id: string;
+  paid_by_member?: Member;
   split_with: string[];
-  items: { name_zh: string; price: number }[];
+  items: { name_jp: string; name_zh: string; price: number }[];
+}
+
+export interface JoinInfo {
+  trip_name: string;
+  owner_name: string;
+  member_count: number;
+  start_date: string;
+  end_date: string;
 }
 
 export interface DashboardData {
@@ -52,6 +61,7 @@ export interface Trip {
   notion_page_id: string;
   notion_db_id: string;
   invite_code: string;
+  is_owner: boolean;
   created_at: string;
 }
 
