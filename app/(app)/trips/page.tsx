@@ -56,7 +56,7 @@ function TripCard({ trip, onSelect }: { trip: Trip; onSelect: (id: string) => vo
         <div className="flex items-center mt-3">
           {visible.map((m, i) => (
             <div key={m.id} style={{ zIndex: visible.length - i, marginLeft: i === 0 ? 0 : -6 }}>
-              <MemberAvatar member={m} size="sm" />
+              <MemberAvatar user={m.user} size="sm" />
             </div>
           ))}
           {overflow > 0 && (

@@ -6,47 +6,37 @@ import { useCreateTrip } from "@/lib/hooks/use-trips";
 import { useTripStore } from "@/store/trip-store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ColorPicker, DEFAULT_COLOR } from "@/components/member/color-picker";
-import { MemberAvatar } from "@/components/member/member-avatar";
 import { getErrorMessage } from "@/lib/api";
-import type { Member } from "@/lib/types";
 
 export default function NewTripPage() {
   const router = useRouter();
   const { mutateAsync: createTrip, isPending } = useCreateTrip();
-  const { setCurrentTripId, setCurrentMemberID } = useTripStore();
+  const { setCurrentTripId } = useTripStore();
   const today = new Date().toISOString().slice(0, 10);
 
   const [form, setForm] = useState({
     name: "",
     start_date: today,
     end_date: "",
-    owner_name: "",
-    owner_avatar_color: DEFAULT_COLOR,
+    budget_jpy: "",
+    budget_suica: "",
   });
   const [error, setError] = useState<string | null>(null);
-
-  const previewMember: Member = {
-    id: "", trip_id: "", name: form.owner_name || "?",
-    avatar_color: form.owner_avatar_color, is_owner: true, created_at: "",
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) { setError("旅行名を入力してください"); return; }
-    if (!form.owner_name.trim()) { setError("あなたの名前を入力してください"); return; }
     setError(null);
 
     try {
-      const { trip, owner } = await createTrip({
+      const trip = await createTrip({
         name: form.name.trim(),
         start_date: form.start_date,
         end_date: form.end_date,
-        owner_name: form.owner_name.trim(),
-        owner_avatar_color: form.owner_avatar_color,
+        budget_jpy: form.budget_jpy ? Number(form.budget_jpy) : undefined,
+        budget_suica: form.budget_suica ? Number(form.budget_suica) : undefined,
       });
       setCurrentTripId(trip.id);
-      setCurrentMemberID(owner.id);
       router.replace("/trips");
     } catch (err) {
       setError(getErrorMessage(err));
@@ -90,26 +80,23 @@ export default function NewTripPage() {
           />
         </div>
 
-        {/* Owner identity */}
-        <div className="flex flex-col gap-3 bg-[#1a1a1a] border border-[#2e2e2e] rounded-2xl p-4">
-          <p className="text-xs font-semibold text-[#888888] uppercase tracking-wide">あなたは誰？</p>
+        <div className="grid grid-cols-2 gap-3">
           <Input
-            label="あなたの名前 *"
-            placeholder="名前を入力"
-            value={form.owner_name}
-            onChange={(e) => setForm((p) => ({ ...p, owner_name: e.target.value }))}
+            label="予算 (JPY)"
+            type="number"
+            placeholder="150000"
+            value={form.budget_jpy}
+            onChange={(e) => setForm((p) => ({ ...p, budget_jpy: e.target.value }))}
             disabled={isPending}
           />
-          <div className="flex flex-col gap-2">
-            <span className="text-xs text-[#888888]">アバターカラー</span>
-            <div className="flex items-center gap-3">
-              <MemberAvatar member={previewMember} size="lg" />
-              <ColorPicker
-                value={form.owner_avatar_color}
-                onChange={(c) => setForm((p) => ({ ...p, owner_avatar_color: c }))}
-              />
-            </div>
-          </div>
+          <Input
+            label="Suica 予算"
+            type="number"
+            placeholder="10000"
+            value={form.budget_suica}
+            onChange={(e) => setForm((p) => ({ ...p, budget_suica: e.target.value }))}
+            disabled={isPending}
+          />
         </div>
 
         <div className="flex gap-3 bg-[#1a1a1a] border border-[#2e2e2e] rounded-2xl p-4">

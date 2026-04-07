@@ -20,9 +20,9 @@ export function MemberChip({ member, selected, onToggle }: MemberChipProps) {
           : "border-[#2e2e2e] bg-[#1a1a1a]"
       }`}
     >
-      <MemberAvatar member={member} size="sm" />
+      <MemberAvatar user={member.user} size="sm" />
       <span className={`text-sm font-medium ${selected ? "text-amber-500" : "text-[#888888]"}`}>
-        {member.name}
+        {member.user.name}
       </span>
     </button>
   );

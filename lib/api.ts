@@ -1,5 +1,4 @@
 import axios, { AxiosError } from "axios";
-import { useTripStore } from "@/store/trip-store";
 
 // All requests go through the Next.js proxy so the server can attach
 // the httpOnly auth_token cookie as an Authorization header.
@@ -10,15 +9,6 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-});
-
-// Request interceptor: attach X-Member-ID from Zustand store
-api.interceptors.request.use((config) => {
-  const memberId = useTripStore.getState().currentMemberID;
-  if (memberId) {
-    config.headers["X-Member-ID"] = memberId;
-  }
-  return config;
 });
 
 // Response interceptor: on 401 redirect to login
@@ -47,6 +37,7 @@ export function getErrorMessage(error: unknown): string {
 // Auth endpoints
 export const authApi = {
   me: () => api.get<import("./types").User>("/auth/me"),
+  notionUrl: () => api.get<{ url: string }>("/auth/notion/url"),
   notionCallback: (code: string) =>
     api.post<{ token: string; user: import("./types").User }>(
       "/auth/notion/callback",
@@ -62,29 +53,31 @@ export const recordsApi = {
       headers: { "Content-Type": "multipart/form-data" },
     }),
   create: (data: {
-    store: string;
+    store_name_zh: string;
+    store_name_jp: string;
     amount_jpy: number;
     amount_twd?: number;
     tax_jpy: number;
     payment: string;
     category: string;
-    items: { name_jp: string; name_zh: string; price: number }[];
+    items: { name_zh: string; price: number }[];
     date: string;
     trip_id: string;
-    paid_by_member_id: string;
+    paid_by_user_id: string;
     split_with: string[];
   }) => api.post<import("./types").Record>("/records", data),
   update: (
     id: string,
     data: Partial<{
-      store: string;
+      store_name_zh: string;
+      store_name_jp: string;
       amount_jpy: number;
       tax_jpy: number;
       payment: string;
       category: string;
-      items: { name_jp: string; name_zh: string; price: number }[];
+      items: { name_zh: string; price: number }[];
       date: string;
-      paid_by_member_id: string;
+      paid_by_user_id: string;
       split_with: string[];
     }>
   ) => api.patch<import("./types").Record>(`/records/${id}`, data),
@@ -109,23 +102,17 @@ export const tripsApi = {
     name: string;
     start_date: string;
     end_date: string;
-    owner_name: string;
-    owner_avatar_color: string;
-  }) =>
-    api.post<{ trip: import("./types").Trip; owner: import("./types").Member }>(
-      "/trips",
-      data
-    ),
+    budget_jpy?: number;
+    budget_suica?: number;
+  }) => api.post<import("./types").Trip>("/trips", data),
 };
 
 // Members endpoints
 export const membersApi = {
   list: (tripId: string) =>
     api.get<import("./types").Member[]>(`/trips/${tripId}/members`),
-  create: (tripId: string, data: { name: string; avatar_color: string }) =>
-    api.post<import("./types").Member>(`/trips/${tripId}/members`, data),
-  delete: (tripId: string, memberId: string) =>
-    api.delete(`/trips/${tripId}/members/${memberId}`),
+  delete: (tripId: string, userId: string) =>
+    api.delete(`/trips/${tripId}/members/${userId}`),
 };
 
 // Settlement endpoint
@@ -138,7 +125,7 @@ export const settlementApi = {
 export const joinApi = {
   info: (code: string) =>
     api.get<import("./types").JoinInfo>(`/trips/join-info?code=${code}`),
-  join: (data: { invite_code: string; name: string; avatar_color: string }) =>
+  join: (data: { invite_code: string }) =>
     api.post<{ trip: import("./types").Trip; member: import("./types").Member }>(
       "/trips/join",
       data
@@ -147,5 +134,5 @@ export const joinApi = {
 
 // Split export endpoint
 export const splitApi = {
-  export: (tripId: string) => api.post(`/split/export/${tripId}`),
+  export: (tripId: string) => api.post(`/trips/${tripId}/settlement/export`),
 };

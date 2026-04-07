@@ -1,7 +1,8 @@
 export interface User {
-  id: string;
+  id: string;        // Notion user_id
   name: string;
   avatar_url: string;
+  created_at: string;
 }
 
 export interface ParsedReceipt {
@@ -16,26 +17,25 @@ export interface ParsedReceipt {
 }
 
 export interface Record {
-  id: string;
-  store: string;
+  id: string;             // Notion page_id
+  store_name_zh: string;
+  store_name_jp: string;
   date: string;
   amount_jpy: number;
   amount_twd: number;
   tax_jpy: number;
   category: string;
   payment: string;
-  paid_by_member_id: string;
-  paid_by_member?: Member;
-  split_with: string[];
-  items: { name_jp: string; name_zh: string; price: number }[];
+  paid_by_user_id: string;
+  paid_by_user?: User;
+  split_with: string[];   // user_ids (empty = split among all)
+  items: { name_zh: string; price: number }[];
 }
 
 export interface JoinInfo {
   trip_name: string;
   owner_name: string;
   member_count: number;
-  start_date: string;
-  end_date: string;
 }
 
 export interface DashboardData {
@@ -43,48 +43,39 @@ export interface DashboardData {
   total_twd: number;
   by_person: { user_id: string; name: string; amount: number }[];
   by_category: { category: string; amount: number }[];
-  settlements: {
-    from: string;
-    from_name: string;
-    to: string;
-    to_name: string;
-    amount: number;
-  }[];
   records: Record[];
 }
 
 export interface Trip {
   id: string;
   name: string;
-  start_date: string;
-  end_date: string;
+  owner_id: string;
   notion_page_id: string;
   notion_db_id: string;
+  budget_jpy: number;
+  budget_suica: number;
+  start_date: string;
+  end_date: string;
   invite_code: string;
   is_owner: boolean;
+  member_count: number;
   created_at: string;
 }
 
 export interface Member {
   id: string;
   trip_id: string;
-  name: string;
-  avatar_color: string;
+  user_id: string;
   is_owner: boolean;
-  created_at: string;
+  joined_at: string;
+  user: User;
 }
 
 export interface SettlementResult {
   total_jpy: number;
-  by_member: {
-    member: Member;
-    paid_jpy: number;
-    owe_jpy: number;
-    diff_jpy: number;
-  }[];
   settlements: {
-    from: Member;
-    to: Member;
+    from: User;
+    to: User;
     amount_jpy: number;
   }[];
 }

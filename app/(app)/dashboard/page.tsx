@@ -70,6 +70,27 @@ export default function DashboardPage() {
         <StatCard label="合計 (TWD)" value={`NT$${totalTwd.toLocaleString()}`} />
       </div>
 
+      {/* Budget progress */}
+      {trip?.budget_jpy ? (
+        <div className="bg-[#1a1a1a] border border-[#2e2e2e] rounded-2xl px-4 py-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-[#888888]">予算</span>
+            <span className="text-xs text-[#888888]">
+              ¥{totalJpy.toLocaleString()} / ¥{trip.budget_jpy.toLocaleString()}
+            </span>
+          </div>
+          <div className="h-2 bg-[#2e2e2e] rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${
+                totalJpy / trip.budget_jpy > 0.9 ? "bg-red-500" :
+                totalJpy / trip.budget_jpy > 0.7 ? "bg-amber-500" : "bg-green-500"
+              }`}
+              style={{ width: `${Math.min(100, (totalJpy / trip.budget_jpy) * 100).toFixed(1)}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
+
       {/* Per person */}
       {byPerson.length > 0 && (
         <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-[#2e2e2e] flex flex-col gap-4">

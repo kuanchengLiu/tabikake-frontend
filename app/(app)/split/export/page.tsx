@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSettlement } from "@/lib/hooks/use-settlement";
+import { useSettlement, useExportSettlement } from "@/lib/hooks/use-settlement";
 import { useTripStore } from "@/store/trip-store";
 import { MemberAvatar } from "@/components/member/member-avatar";
 import { Button } from "@/components/ui/button";
-import { splitApi, getErrorMessage } from "@/lib/api";
 
 export default function SplitExportPage() {
   const router = useRouter();
@@ -15,28 +13,12 @@ export default function SplitExportPage() {
   const tripId = searchParams.get("trip_id") ?? storeTripId ?? "";
 
   const { data } = useSettlement(tripId || null);
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [notionUrl, setNotionUrl] = useState<string | null>(null);
+  const exportSettlement = useExportSettlement(tripId);
 
   const settlements = data?.settlements ?? [];
+  const notionUrl = (exportSettlement.data as { notion_page_url?: string } | undefined)?.notion_page_url;
 
-  const handleExport = async () => {
-    setLoading(true);
-    setStatus("idle");
-    try {
-      const res = await splitApi.export(tripId);
-      setStatus("success");
-      const url = (res.data as { url?: string })?.url;
-      if (url) setNotionUrl(url);
-    } catch (err) {
-      setErrorMsg(getErrorMessage(err));
-      setStatus("error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleExport = () => exportSettlement.mutate();
 
   const handleCopy = () => {
     if (notionUrl) navigator.clipboard.writeText(notionUrl);
@@ -65,11 +47,11 @@ export default function SplitExportPage() {
               key={i}
               className="flex items-center gap-3 bg-[#1a1a1a] border border-[#2e2e2e] rounded-2xl px-4 py-3"
             >
-              <MemberAvatar member={s.from} size="md" />
+              <MemberAvatar user={s.from} size="md" />
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888888" strokeWidth="2" strokeLinecap="round" className="flex-shrink-0">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
-              <MemberAvatar member={s.to} size="md" />
+              <MemberAvatar user={s.to} size="md" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-[#f0f0f0]">
                   <span className="font-semibold">{s.from.name}</span>
@@ -85,7 +67,7 @@ export default function SplitExportPage() {
         </div>
       )}
 
-      {status === "success" && (
+      {exportSettlement.isSuccess && (
         <div className="flex flex-col gap-3">
           <div className="px-4 py-3 bg-green-500/10 border border-green-500/30 rounded-2xl">
             <p className="text-sm text-green-400">✓ 結算ページを作成しました！</p>
@@ -106,20 +88,20 @@ export default function SplitExportPage() {
         </div>
       )}
 
-      {status === "error" && (
+      {exportSettlement.isError && (
         <div className="px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-2xl">
-          <p className="text-sm text-red-400">{errorMsg}</p>
+          <p className="text-sm text-red-400">書き出しに失敗しました</p>
         </div>
       )}
 
       <Button
         variant="primary"
         size="lg"
-        loading={loading}
-        disabled={status === "success"}
+        loading={exportSettlement.isPending}
+        disabled={exportSettlement.isSuccess}
         onClick={handleExport}
       >
-        {status === "success" ? "書き出し済み" : "Notion に書き出す"}
+        {exportSettlement.isSuccess ? "書き出し済み" : "Notion に書き出す"}
       </Button>
     </div>
   );

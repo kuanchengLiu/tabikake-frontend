@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useTripStore } from "@/store/trip-store";
+import { useAuth } from "@/lib/hooks/use-auth";
 
 const NAV_ITEMS = [
   {
@@ -78,6 +79,24 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const currentTripId = useTripStore((s) => s.currentTripId);
   const prevTripId = useRef(currentTripId);
+  const { isLoading: authLoading, isError: authError } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && authError) router.push("/login");
+  }, [authLoading, authError, router]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-dvh bg-[#0f0f0f]">
+        <svg className="animate-spin h-6 w-6 text-amber-500" viewBox="0 0 24 24" fill="none">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (authError) return null;
 
   // When trip switches, update URL so trip-aware pages refetch immediately
   useEffect(() => {

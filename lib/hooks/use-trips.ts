@@ -31,8 +31,8 @@ export function useCreateTrip() {
       name: string;
       start_date: string;
       end_date: string;
-      owner_name: string;
-      owner_avatar_color: string;
+      budget_jpy?: number;
+      budget_suica?: number;
     }) => tripsApi.create(data).then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trips.all });

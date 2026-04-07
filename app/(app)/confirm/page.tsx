@@ -7,6 +7,7 @@ import { recordsApi, getErrorMessage } from "@/lib/api";
 import type { ParsedReceipt, Record as ExpenseRecord } from "@/lib/types";
 import { useTripStore } from "@/store/trip-store";
 import { useMembers } from "@/lib/hooks/use-members";
+import { useAuth } from "@/lib/hooks/use-auth";
 import { MemberAvatar } from "@/components/member/member-avatar";
 import { MemberChip } from "@/components/member/member-chip";
 
@@ -24,7 +25,8 @@ const EMPTY_RECEIPT: ParsedReceipt = {
 export default function ConfirmPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { currentTripId: storeTripId, currentMemberID } = useTripStore();
+  const { currentTripId: storeTripId } = useTripStore();
+  const { data: me } = useAuth();
 
   const mode = searchParams.get("mode") ?? "ocr";
   const isManual = mode === "manual";
@@ -42,24 +44,17 @@ export default function ConfirmPage() {
   const [parsed, setParsed] = useState<ParsedReceipt | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [paidByMemberId, setPaidByMemberId] = useState<string>("");
+  // paidByUserId stores the Notion user_id
+  const [paidByUserId, setPaidByUserId] = useState<string>("");
   const [splitMode, setSplitMode] = useState<"aa" | "custom">("aa");
   const [splitWith, setSplitWith] = useState<string[]>([]);
 
-  // Set defaults when members load
+  // Set paid_by default to the logged-in user when members load
   useEffect(() => {
-    if (members.length === 0) return;
-    if (!paidByMemberId) {
-      setPaidByMemberId(currentMemberID ?? members[0].id);
+    if (!paidByUserId && me?.id) {
+      setPaidByUserId(me.id);
     }
-    if (splitWith.length === 0) {
-      setSplitWith(members.map((m) => m.id));
-    }
-  }, [members]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (splitMode === "aa") setSplitWith(members.map((m) => m.id));
-  }, [splitMode, members]);
+  }, [me]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (isEdit) {
@@ -68,16 +63,16 @@ export default function ConfirmPage() {
       try {
         const rec = JSON.parse(stored) as ExpenseRecord;
         setParsed({
-          store_name_jp: "",
-          store_name_zh: rec.store,
+          store_name_jp: rec.store_name_jp,
+          store_name_zh: rec.store_name_zh,
           amount_jpy: rec.amount_jpy,
           tax_jpy: rec.tax_jpy ?? 0,
           payment_method: rec.payment as ParsedReceipt["payment_method"],
           category: rec.category as ParsedReceipt["category"],
-          items: rec.items.map((i) => ({ name_jp: i.name_jp ?? "", name_zh: i.name_zh, price: i.price })),
+          items: rec.items.map((i) => ({ name_jp: "", name_zh: i.name_zh, price: i.price })),
           date: rec.date.slice(0, 10),
         });
-        if (rec.paid_by_member_id) setPaidByMemberId(rec.paid_by_member_id);
+        if (rec.paid_by_user_id) setPaidByUserId(rec.paid_by_user_id);
         if (rec.split_with?.length > 0) {
           setSplitWith(rec.split_with);
           setSplitMode("custom");
@@ -106,32 +101,34 @@ export default function ConfirmPage() {
   const handleConfirm = async (data: ParsedReceipt) => {
     setLoading(true);
     setError(null);
-    const finalSplitWith = splitMode === "aa" ? members.map((m) => m.id) : splitWith;
+    const finalSplitWith = splitMode === "aa" ? [] : splitWith;
     try {
       if (isEdit && recordId) {
         await recordsApi.update(recordId, {
-          store: data.store_name_zh || data.store_name_jp,
+          store_name_zh: data.store_name_zh,
+          store_name_jp: data.store_name_jp,
           amount_jpy: data.amount_jpy,
           tax_jpy: data.tax_jpy,
           payment: data.payment_method,
           category: data.category,
-          items: data.items,
+          items: data.items.map((i) => ({ name_zh: i.name_zh, price: i.price })),
           date: data.date,
-          paid_by_member_id: paidByMemberId,
+          paid_by_user_id: paidByUserId,
           split_with: finalSplitWith,
         });
         sessionStorage.removeItem("editing_record");
       } else {
         await recordsApi.create({
-          store: data.store_name_zh || data.store_name_jp,
+          store_name_zh: data.store_name_zh,
+          store_name_jp: data.store_name_jp,
           amount_jpy: data.amount_jpy,
           tax_jpy: data.tax_jpy,
           payment: data.payment_method,
           category: data.category,
-          items: data.items,
+          items: data.items.map((i) => ({ name_zh: i.name_zh, price: i.price })),
           date: data.date,
           trip_id: tripId,
-          paid_by_member_id: paidByMemberId || (currentMemberID ?? ""),
+          paid_by_user_id: paidByUserId || (me?.id ?? ""),
           split_with: finalSplitWith,
         });
         sessionStorage.removeItem("parsed_receipt");
@@ -185,19 +182,19 @@ export default function ConfirmPage() {
             <span className="text-xs font-medium text-[#888888] uppercase tracking-wide">支払った人</span>
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
               {members.map((member) => {
-                const selected = member.id === paidByMemberId;
+                const selected = member.user_id === paidByUserId;
                 return (
                   <button
-                    key={member.id}
+                    key={member.user_id}
                     type="button"
-                    onClick={() => setPaidByMemberId(member.id)}
+                    onClick={() => setPaidByUserId(member.user_id)}
                     className={`flex flex-col items-center gap-1.5 px-3 py-2 rounded-2xl border transition-all active:scale-95 flex-shrink-0 ${
                       selected ? "border-amber-500 bg-amber-500/10" : "border-[#2e2e2e] bg-[#1a1a1a]"
                     }`}
                   >
-                    <MemberAvatar member={member} size="md" />
+                    <MemberAvatar user={member.user} size="md" />
                     <span className={`text-xs font-medium ${selected ? "text-amber-500" : "text-[#888888]"}`}>
-                      {member.name}
+                      {member.user.name}
                     </span>
                   </button>
                 );
@@ -227,10 +224,10 @@ export default function ConfirmPage() {
               <div className="flex flex-wrap gap-2">
                 {members.map((member) => (
                   <MemberChip
-                    key={member.id}
+                    key={member.user_id}
                     member={member}
-                    selected={splitWith.includes(member.id)}
-                    onToggle={() => toggleSplitMember(member.id)}
+                    selected={splitWith.includes(member.user_id)}
+                    onToggle={() => toggleSplitMember(member.user_id)}
                   />
                 ))}
               </div>

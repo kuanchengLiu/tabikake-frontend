@@ -45,7 +45,10 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const response = NextResponse.redirect(new URL("/upload", request.url));
+  // state param carries the ?next= redirect URL (set by login page)
+  const state = searchParams.get("state");
+  const redirectTo = state ? decodeURIComponent(state) : "/upload";
+  const response = NextResponse.redirect(new URL(redirectTo, request.url));
   response.cookies.set("auth_token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

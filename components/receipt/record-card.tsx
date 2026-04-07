@@ -58,7 +58,7 @@ export function RecordCard({ record, onEdit, onDelete }: RecordCardProps) {
 
   const close = () => { setRevealed(false); setOffset(0); };
 
-  const paidByMember = record.paid_by_member;
+  const paidByUser = record.paid_by_user;
 
   return (
     <div className="relative overflow-hidden rounded-2xl">
@@ -107,14 +107,14 @@ export function RecordCard({ record, onEdit, onDelete }: RecordCardProps) {
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-[#f0f0f0] truncate">{record.store}</p>
+          <p className="text-sm font-semibold text-[#f0f0f0] truncate">{record.store_name_zh || record.store_name_jp}</p>
           <p className="text-xs text-[#888888] mt-0.5">{record.payment} · {record.category}</p>
         </div>
 
         <div className="flex flex-col items-end gap-1">
           <span className="text-sm font-bold text-[#f0f0f0]">¥{record.amount_jpy.toLocaleString()}</span>
-          {paidByMember ? (
-            <MemberAvatar member={paidByMember} size="sm" />
+          {paidByUser ? (
+            <MemberAvatar user={paidByUser} size="sm" />
           ) : (
             <div className="w-6 h-6 rounded-full bg-[#2e2e2e] flex-shrink-0" />
           )}

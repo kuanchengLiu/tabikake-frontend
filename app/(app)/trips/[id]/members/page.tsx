@@ -2,14 +2,15 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMembers, useCreateMember } from "@/lib/hooks/use-members";
+import { useMembers, useRemoveMember } from "@/lib/hooks/use-members";
 import { useTrip } from "@/lib/hooks/use-trips";
+import { useAuth } from "@/lib/hooks/use-auth";
 import { MemberAvatar } from "@/components/member/member-avatar";
-import { ColorPicker, DEFAULT_COLOR } from "@/components/member/color-picker";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" });
+}
 
 export default function MembersPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: tripId } = use(params);
@@ -18,33 +19,34 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
 
   const { data: trip } = useTrip(tripId);
   const { data: members = [], isLoading } = useMembers(tripId);
-  const createMember = useCreateMember(tripId);
+  const { data: me } = useAuth();
+  const removeMember = useRemoveMember(tripId);
 
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [color, setColor] = useState(DEFAULT_COLOR);
+  const currentMember = members.find((m) => m.user_id === me?.id);
+  const isOwner = currentMember?.is_owner ?? false;
+
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const inviteLink =
     typeof window !== "undefined"
       ? `${window.location.origin}/join?code=${trip?.invite_code ?? ""}`
       : `/join?code=${trip?.invite_code ?? ""}`;
 
-  const handleAdd = async () => {
-    if (!name.trim()) return;
-    try {
-      await createMember.mutateAsync({ name: name.trim(), avatar_color: color });
-      toast("メンバーを追加しました", "success");
-      setName("");
-      setColor(DEFAULT_COLOR);
-      setSheetOpen(false);
-    } catch {
-      toast("追加に失敗しました", "error");
-    }
-  };
-
   const handleCopyLink = () => {
     navigator.clipboard.writeText(inviteLink);
     toast("招待リンクをコピーしました", "success");
+  };
+
+  const handleRemove = async (userId: string) => {
+    setRemovingId(userId);
+    try {
+      await removeMember.mutateAsync(userId);
+      toast("メンバーを削除しました", "success");
+    } catch {
+      toast("削除に失敗しました", "error");
+    } finally {
+      setRemovingId(null);
+    }
   };
 
   return (
@@ -60,16 +62,6 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
           <h1 className="text-xl font-bold text-[#f0f0f0]">メンバー管理</h1>
           <p className="text-sm text-[#888888] truncate">{trip?.name}</p>
         </div>
-        <button
-          onClick={() => setSheetOpen(true)}
-          className="flex items-center gap-1.5 bg-amber-500 text-black rounded-xl px-3 py-2 text-sm font-semibold active:scale-95 transition-transform"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          新増
-        </button>
       </div>
 
       {/* Invite code */}
@@ -112,45 +104,35 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
               key={member.id}
               className="flex items-center gap-3 bg-[#1a1a1a] border border-[#2e2e2e] rounded-2xl px-4 py-3"
             >
-              <MemberAvatar member={member} size="md" />
+              <MemberAvatar user={member.user} size="md" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-[#f0f0f0]">{member.name}</p>
-                {member.is_owner && (
-                  <p className="text-xs text-amber-500">オーナー</p>
-                )}
+                <p className="text-sm font-semibold text-[#f0f0f0]">{member.user.name}</p>
+                <p className="text-xs text-[#888888]">
+                  {member.is_owner ? (
+                    <span className="text-amber-500">オーナー</span>
+                  ) : (
+                    formatDate(member.joined_at) + " 参加"
+                  )}
+                </p>
               </div>
+              {isOwner && member.user_id !== me?.id && (
+                <button
+                  onClick={() => handleRemove(member.user_id)}
+                  disabled={removingId === member.user_id}
+                  className="p-2 text-[#888888] active:text-red-400 transition-colors disabled:opacity-50"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                    <path d="M10 11v6M14 11v6" />
+                    <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
+                  </svg>
+                </button>
+              )}
             </div>
           ))}
         </div>
       )}
-
-      {/* Add member sheet */}
-      <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="メンバーを追加">
-        <div className="flex flex-col gap-5 p-5">
-          <Input
-            label="名前"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="旅仲間の名前"
-          />
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-medium text-[#888888] uppercase tracking-wide">アバターカラー</span>
-            <div className="flex items-center gap-3">
-              <MemberAvatar member={{ id: "", trip_id: "", name: name || "?", avatar_color: color, is_owner: false, created_at: "" }} size="lg" />
-              <ColorPicker value={color} onChange={setColor} />
-            </div>
-          </div>
-          <Button
-            variant="primary"
-            size="lg"
-            loading={createMember.isPending}
-            disabled={!name.trim()}
-            onClick={handleAdd}
-          >
-            追加する
-          </Button>
-        </div>
-      </BottomSheet>
     </div>
   );
 }

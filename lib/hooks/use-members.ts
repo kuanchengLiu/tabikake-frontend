@@ -14,11 +14,10 @@ export function useMembers(tripId: string | null) {
   });
 }
 
-export function useCreateMember(tripId: string) {
+export function useRemoveMember(tripId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { name: string; avatar_color: string }) =>
-      membersApi.create(tripId, data),
+    mutationFn: (userId: string) => membersApi.delete(tripId, userId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.members.list(tripId) });
     },

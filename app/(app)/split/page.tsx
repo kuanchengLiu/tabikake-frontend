@@ -38,7 +38,6 @@ export default function SplitPage() {
     );
   }
 
-  const byMember = data?.by_member ?? [];
   const settlements = data?.settlements ?? [];
   const totalJpy = data?.total_jpy ?? 0;
 
@@ -55,38 +54,6 @@ export default function SplitPage() {
         <span className="text-lg font-bold text-amber-500">¥{totalJpy.toLocaleString()}</span>
       </div>
 
-      {/* Per member */}
-      {byMember.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold text-[#f0f0f0]">各自の支払い</h2>
-          {byMember.map(({ member, paid_jpy, owe_jpy, diff_jpy }) => (
-            <div
-              key={member.id}
-              className="flex items-center gap-3 bg-[#1a1a1a] border border-[#2e2e2e] rounded-2xl px-4 py-3"
-            >
-              <MemberAvatar member={member} size="md" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-[#f0f0f0]">{member.name}</p>
-                <p className="text-xs text-[#888888]">
-                  実払 ¥{paid_jpy.toLocaleString()} / 負担 ¥{owe_jpy.toLocaleString()}
-                </p>
-              </div>
-              <span
-                className={`text-sm font-bold flex-shrink-0 ${
-                  diff_jpy > 0 ? "text-green-400" : diff_jpy < 0 ? "text-red-400" : "text-[#888888]"
-                }`}
-              >
-                {diff_jpy > 0
-                  ? `+¥${diff_jpy.toLocaleString()}`
-                  : diff_jpy < 0
-                  ? `-¥${Math.abs(diff_jpy).toLocaleString()}`
-                  : "±0"}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Settlements */}
       {settlements.length > 0 && (
         <div className="flex flex-col gap-3">
@@ -96,11 +63,11 @@ export default function SplitPage() {
               key={i}
               className="flex items-center gap-3 bg-[#1a1a1a] border border-[#2e2e2e] rounded-2xl px-4 py-3"
             >
-              <MemberAvatar member={s.from} size="md" />
+              <MemberAvatar user={s.from} size="md" />
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888888" strokeWidth="2" strokeLinecap="round" className="flex-shrink-0">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
-              <MemberAvatar member={s.to} size="md" />
+              <MemberAvatar user={s.to} size="md" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-[#f0f0f0]">
                   <span className="font-semibold">{s.from.name}</span>
@@ -116,7 +83,7 @@ export default function SplitPage() {
         </div>
       )}
 
-      {byMember.length === 0 && settlements.length === 0 && (
+      {settlements.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 gap-3">
           <span className="text-4xl">💴</span>
           <p className="text-sm text-[#888888]">まだ支出がありません</p>

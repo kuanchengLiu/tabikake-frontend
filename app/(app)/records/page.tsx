@@ -149,7 +149,7 @@ export default function RecordsPage() {
       >
         <div className="flex flex-col gap-4 p-5">
           <p className="text-sm text-[#888888]">
-            <span className="text-[#f0f0f0] font-semibold">「{deleteTarget?.store}」</span>
+            <span className="text-[#f0f0f0] font-semibold">「{deleteTarget?.store_name_zh || deleteTarget?.store_name_jp}」</span>
             の記録を削除しますか？この操作は取り消せません。
           </p>
           <Button variant="primary" size="lg" loading={deleting} onClick={handleDeleteConfirm}
