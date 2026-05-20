@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/auth/callback", "/offline", "/api/auth", "/join", "/api/join-info"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/auth/callback",
+  "/offline",
+  "/api/auth",
+  "/api/proxy/auth/notion/url",
+  "/join",
+  "/api/join-info",
+];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

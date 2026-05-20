@@ -18,6 +18,9 @@ export function useTrip(id: string | null) {
     queryKey: QUERY_KEYS.trips.one(id ?? ""),
     queryFn: async () => {
       const { data } = await tripsApi.get(id!);
+      if ("trip" in data) {
+        return data.trip;
+      }
       return data;
     },
     enabled: !!id,

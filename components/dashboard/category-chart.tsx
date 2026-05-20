@@ -16,7 +16,14 @@ interface CategoryChartProps {
 }
 
 export function CategoryChart({ data }: CategoryChartProps) {
-  if (data.length === 0) {
+  const chartData = data
+    .map((item) => ({
+      category: item.category || "未分類",
+      amount: Number(item.amount) || 0,
+    }))
+    .filter((item) => item.amount > 0);
+
+  if (chartData.length === 0) {
     return (
       <div className="flex items-center justify-center h-40 text-[#888888] text-sm">
         データなし
@@ -29,7 +36,7 @@ export function CategoryChart({ data }: CategoryChartProps) {
       <ResponsiveContainer width="100%" height={200}>
         <PieChart>
           <Pie
-            data={data}
+            data={chartData}
             cx="50%"
             cy="50%"
             innerRadius={55}
@@ -38,7 +45,7 @@ export function CategoryChart({ data }: CategoryChartProps) {
             nameKey="category"
             paddingAngle={3}
           >
-            {data.map((_, idx) => (
+            {chartData.map((_, idx) => (
               <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
             ))}
           </Pie>
@@ -60,7 +67,7 @@ export function CategoryChart({ data }: CategoryChartProps) {
 
       {/* Legend */}
       <div className="grid grid-cols-2 gap-2">
-        {data.map((item, idx) => (
+        {chartData.map((item, idx) => (
           <div key={item.category} className="flex items-center gap-2">
             <div
               className="w-2.5 h-2.5 rounded-full flex-shrink-0"

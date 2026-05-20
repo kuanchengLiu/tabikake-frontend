@@ -90,7 +90,7 @@ export default function ConfirmPage() {
     } catch {
       router.replace(`/upload${tripId ? `?trip_id=${tripId}` : ""}`);
     }
-  }, [isManual, isEdit, router, tripId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isManual, isEdit, router, tripId]);
 
   const toggleSplitMember = (id: string) => {
     setSplitWith((prev) =>

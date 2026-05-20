@@ -97,7 +97,10 @@ export const dashboardApi = {
 // Trips endpoints
 export const tripsApi = {
   list: () => api.get<import("./types").Trip[]>("/trips"),
-  get: (id: string) => api.get<import("./types").Trip>(`/trips/${id}`),
+  get: (id: string) =>
+    api.get<{ trip: import("./types").Trip; is_member: boolean } | import("./types").Trip>(
+      `/trips/${id}`
+    ),
   create: (data: {
     name: string;
     start_date: string;

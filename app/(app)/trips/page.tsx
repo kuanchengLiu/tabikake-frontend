@@ -39,9 +39,10 @@ function TripCard({ trip, onSelect }: { trip: Trip; onSelect: (id: string) => vo
           </p>
         </button>
         <Link
-          href={`/trips/${trip.id}/members`}
+          href={`/trips/${trip.id}/members?invite=1`}
           className="flex-shrink-0 w-8 h-8 rounded-xl bg-[#242424] flex items-center justify-center text-[#888888] active:text-[#f0f0f0]"
           onClick={(e) => e.stopPropagation()}
+          aria-label="邀請與成員"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />

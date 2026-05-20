@@ -8,13 +8,15 @@ export default function AuthCallbackPage() {
   const called = useRef(false);
 
   const code = searchParams.get("code");
+  const state = searchParams.get("state");
   const oauthError = searchParams.get("error");
 
   useEffect(() => {
     if (called.current || oauthError || !code) return;
     called.current = true;
-    window.location.href = `/api/auth/callback?code=${encodeURIComponent(code)}`;
-  }, [code, oauthError]);
+    const stateParam = state ? `&state=${encodeURIComponent(state)}` : "";
+    window.location.href = `/api/auth/callback?code=${encodeURIComponent(code)}${stateParam}`;
+  }, [code, oauthError, state]);
 
   if (oauthError || !code) {
     return (

@@ -37,7 +37,7 @@ export default function NewTripPage() {
         budget_suica: form.budget_suica ? Number(form.budget_suica) : undefined,
       });
       setCurrentTripId(trip.id);
-      router.replace("/trips");
+      router.replace(`/trips/${trip.id}/members?invite=1`);
     } catch (err) {
       setError(getErrorMessage(err));
     }
